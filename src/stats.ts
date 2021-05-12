@@ -59,6 +59,18 @@ export interface LineStats {
     empty: number;
 };
 
+export const makeEmptyLineStatistics = ():LineStats => ({
+  total: 0,
+  totalSource: 0,
+  source: 0,
+  totalComments: 0,
+  inlineComments: 0,
+  blockComments: 0,
+  mixed: 0,
+  whitespace: 0,
+  empty: 0,
+});
+
 /**
  * Defines the numbered statistics for the individual characters (bytes) read
  * within the source files.
@@ -107,6 +119,16 @@ export interface CharacterStats {
     special: number;
 };
 
+export const makeEmptyCharacterStatistics = ():CharacterStats => ({
+  total: 0,
+  source: 0,
+  comment: 0,
+  whitespace: 0,
+  numerical: 0,
+  alphabetical: 0,
+  special: 0,
+});
+
 /**
  * An array holding the total statistics into one value.
  * This is intended for array destructuring, such that:
@@ -115,3 +137,5 @@ export interface CharacterStats {
  * ```
  */
 export type Statistics = [ LineStats, CharacterStats ];
+
+export const makeEmptyStatistics = ():Statistics => ([ makeEmptyLineStatistics(), makeEmptyCharacterStatistics() ]);

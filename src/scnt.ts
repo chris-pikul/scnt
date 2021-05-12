@@ -3,6 +3,9 @@ import {
   LineStats,
   CharacterStats,
   Statistics,
+  makeEmptyLineStatistics,
+  makeEmptyCharacterStatistics,
+  makeEmptyStatistics,
 } from './stats';
 
 export interface SCNTOptions {
@@ -54,27 +57,9 @@ export default class SCNT {
 
   private _filesRead:Map<string, Statistics>;
 
-  private _lineStats: LineStats = {
-    total: 0,
-    totalSource: 0,
-    source: 0,
-    totalComments: 0,
-    inlineComments: 0,
-    blockComments: 0,
-    mixed: 0,
-    whitespace: 0,
-    empty: 0,
-  };
+  private _lineStats: LineStats = makeEmptyLineStatistics();
 
-  private _charStats: CharacterStats = {
-    total: 0,
-    source: 0,
-    comment: 0,
-    whitespace: 0,
-    numerical: 0,
-    alphabetical: 0,
-    special: 0,
-  };
+  private _charStats: CharacterStats = makeEmptyCharacterStatistics();
 
 
   constructor(options?:SCNTOptions) {
@@ -135,52 +120,12 @@ export default class SCNT {
   public reset():void {
     this._filesRead.clear();
 
-    this._lineStats = {
-      total: 0,
-      totalSource: 0,
-      source: 0,
-      totalComments: 0,
-      inlineComments: 0,
-      blockComments: 0,
-      mixed: 0,
-      whitespace: 0,
-      empty: 0,
-    };
+    this._lineStats = makeEmptyLineStatistics();
 
-    this._charStats = {
-      total: 0,
-      source: 0,
-      comment: 0,
-      whitespace: 0,
-      numerical: 0,
-      alphabetical: 0,
-      special: 0,
-    };
+    this._charStats = makeEmptyCharacterStatistics();
   };
 
   public process(fileName:string, contents:string):(Statistics|undefined) {
-    const lines: LineStats = {
-      total: 0,
-      totalSource: 0,
-      source: 0,
-      totalComments: 0,
-      inlineComments: 0,
-      blockComments: 0,
-      mixed: 0,
-      whitespace: 0,
-      empty: 0,
-    };
-
-    const chars: CharacterStats = {
-      total: 0,
-      source: 0,
-      comment: 0,
-      whitespace: 0,
-      numerical: 0,
-      alphabetical: 0,
-      special: 0,
-    };
-
     // Reject if the contents are "empty"
     if(contents.length === 0)
       return;
@@ -205,7 +150,7 @@ export default class SCNT {
     // TODO: LEFT OFF HERE. Was going to add "parsers" now using the fileType
 
     // Make the final stats object for usage with functions and returning.
-    const stats: Statistics = [ lines, chars ];
+    const stats: Statistics = makeEmptyStatistics();
 
     // Check if we already have this file processed
     if(this._filesRead.has(fileName))
