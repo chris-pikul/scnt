@@ -56,6 +56,9 @@ export function getTypeExtensions(type:string):string[] {
 export function getExtensionType(ext:string):string {
   const cleanExt = ext.toLowerCase().trim();
 
+  if(cleanExt.length === 0)
+    return '';
+
   for(const [ type, arr ] of Object.entries(extensionMap)) {
     if(arr.includes(cleanExt))
       return type;
