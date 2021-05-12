@@ -1,0 +1,15 @@
+#!/usr/bin/env node
+
+const Path = require('path');
+const FS = require('fs');
+
+// Find the current working directory.
+// I've done it this way because sometimes my __dirname
+// was "undefined".
+const CWD = __dirname || (FS.realpathSync(__filename));
+
+// Resolve the library folder
+const Lib = Path.resolve(CWD, '../', 'lib');
+
+// Require in the actual CLI now
+require( Path.join(Lib, 'cli') );

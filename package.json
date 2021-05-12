@@ -1,0 +1,42 @@
+{
+  "name": "scnt",
+  "version": "1.0.0",
+  "description": "Utility program/library for counting source code lines",
+  "main": "index.js",
+  "scripts": {
+    "clean": "node clean",
+    "build": "npm run clean && tsc",
+    "start": "npm run build && node ./lib/cli"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chris-pikul/scnt.git"
+  },
+  "keywords": [
+    "cli",
+    "utility",
+    "sloc",
+    "loc",
+    "source",
+    "code",
+    "count"
+  ],
+  "author": "Chris Pikul <ChrisPikul510@gmail.com>",
+  "license": "MIT",
+  "bin": {
+    "scnt": "bin/scnt"
+  },
+  "bugs": {
+    "url": "https://github.com/chris-pikul/scnt/issues"
+  },
+  "homepage": "https://github.com/chris-pikul/scnt#readme",
+  "dependencies": {
+    "commander": "^7.2.0"
+  },
+  "devDependencies": {
+    "@tsconfig/node12": "^1.0.7",
+    "@types/node": "^15.0.2",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.2.4"
+  }
+}
