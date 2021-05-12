@@ -124,6 +124,24 @@ module.exports = {
       {
         before: true,
         after: true,
+        overrides: {
+          'if': {
+            before: true,
+            after: false,
+          },
+          'for': {
+            before: true,
+            after: false,
+          },
+          'switch': {
+            before: true,
+            after: false,
+          },
+          'while': {
+            before: true,
+            after: false,
+          },
+        },
       },
     ],
     'line-comment-position': [ 'warn', 'above' ],
