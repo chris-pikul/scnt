@@ -202,6 +202,8 @@ export default class SCNT {
       fileType = this.options.parseUnknownAs;
     }
 
+    // TODO: LEFT OFF HERE. Was going to add "parsers" now using the fileType
+
     // Make the final stats object for usage with functions and returning.
     const stats: Statistics = [ lines, chars ];
 
