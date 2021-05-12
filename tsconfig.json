@@ -2,7 +2,9 @@
     "extends": "@tsconfig/node12/tsconfig.json",
 
     "compilerOptions": {
-        "outDir": "lib"
+        "outDir": "dist",
+        "declaration": false,
+        "inlineSourceMap": true
     },
 
     "include": [ "src/**/*" ],

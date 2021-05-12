@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "clean": "node clean",
+    "lint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
     "build": "npm run clean && tsc",
     "start": "npm run build && node ./lib/cli"
   },
@@ -31,12 +32,20 @@
   },
   "homepage": "https://github.com/chris-pikul/scnt#readme",
   "dependencies": {
+    "chalk": "^4.1.1",
     "commander": "^7.2.0"
   },
   "devDependencies": {
     "@tsconfig/node12": "^1.0.7",
     "@types/node": "^15.0.2",
+    "@typescript-eslint/eslint-plugin": "^4.23.0",
+    "@typescript-eslint/parser": "^4.23.0",
+    "eslint": "^7.26.0",
+    "eslint-plugin-node": "^11.1.0",
     "rimraf": "^3.0.2",
     "typescript": "^4.2.4"
+  },
+  "engines": {
+    "node": ">=12.22.1"
   }
 }

@@ -9,7 +9,7 @@ const FS = require('fs');
 const CWD = __dirname || (FS.realpathSync(__filename));
 
 // Resolve the library folder
-const Lib = Path.resolve(CWD, '../', 'lib');
+const Lib = Path.resolve(CWD, '../', 'dist');
 
 // Require in the actual CLI now
 require( Path.join(Lib, 'cli') );

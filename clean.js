@@ -2,7 +2,7 @@ const Path = require('path');
 const RimRaf = require('rimraf');
 
 const cleanPaths = [
-    'lib/**',
+    'dist/**',
 ];
 
 cleanPaths.map(p => Path.resolve(__dirname, p))
