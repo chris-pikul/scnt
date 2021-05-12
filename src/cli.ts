@@ -12,6 +12,7 @@ const clrDebug = Chalk.gray;
 const clrInfo = Chalk.blue;
 const clrErr = Chalk.bgRed.white;
 
+// Construct the commander program and parse the arguments
 const program = new Command()
   .version(Package.version, '-v, --version')
   .usage('[options] <file>|<directory>')
@@ -20,6 +21,7 @@ const program = new Command()
 
 const options = program.opts();
 
+// Ensure that there is an actual target supplied
 if (program.args.length < 1) {
   console.log(clrErr('You must provide a valid target, either a file or directory!'));
   program.help();

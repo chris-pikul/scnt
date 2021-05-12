@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "node clean",
     "lint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
-    "build": "npm run clean && tsc",
+    "build": "npx eslint ./src --quiet --ext .js,.jsx,.ts,.tsx && npm run clean && tsc",
     "start": "npm run build && node ./lib/cli"
   },
   "repository": {
