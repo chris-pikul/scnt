@@ -2,6 +2,7 @@
  * Defines the numbered statistics for how many lines are in each category.
  */
 export interface LineStats {
+    [key:string] : number;
 
     /**
      * Sum total of all lines, including: source, comments, and empty.
@@ -63,7 +64,8 @@ export interface LineStats {
  * within the source files.
  */
 export interface CharacterStats {
-
+    [key:string] : number;
+    
     /**
      * The total number of characters read.
      * 
@@ -105,4 +107,11 @@ export interface CharacterStats {
     special: number;
 };
 
+/**
+ * An array holding the total statistics into one value.
+ * This is intended for array destructuring, such that:
+ * ```
+ * const [ lines, characters ] = Statistics
+ * ```
+ */
 export type Statistics = [ LineStats, CharacterStats ];
