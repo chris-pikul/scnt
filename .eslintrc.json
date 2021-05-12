@@ -155,6 +155,7 @@
     "no-trailing-spaces": [
       "warn",
       {
+        "skipBlankLines": true,
         "ignoreComments": true
       }
     ],

@@ -178,7 +178,13 @@ module.exports = {
     'no-negated-condition': 'error',
     'no-nested-ternary': 'error',
     'no-new-object': 'error',
-    'no-trailing-spaces': [ 'warn', { ignoreComments: true } ],
+    'no-trailing-spaces': [
+      'warn',
+      {
+        skipBlankLines: true,
+        ignoreComments: true,
+      },
+    ],
     'no-whitespace-before-property': 'warn',
     'nonblock-statement-body-position': [ 'error', 'below' ],
     'object-curly-newline': [
