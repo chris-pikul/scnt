@@ -98,23 +98,26 @@ export interface CharacterStats {
 
     /**
      * Total whitespace characters. This includes spaces, tabs, carriage-returns
-     * and line-feeds.
+     * and line-feeds. These can be in comments, or outside of them.
      */
     whitespace: number;
 
     /**
      * Total characters that are numerical 0-9.
+     * These can be in comments, or outside of them.
      */
     numerical: number;
 
     /**
      * Total characters that are alphabetical A-Z, case independent.
+     * These can be in comments, or outside of them.
      */
     alphabetical: number;
 
     /**
      * Total "special" characters. These are the remaining characters that are
      * not considered alpha-numerical.
+     * These can be in comments, or outside of them.
      */
     special: number;
 };
