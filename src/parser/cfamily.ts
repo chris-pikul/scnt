@@ -1,30 +1,64 @@
+import Parser from './';
 import {
   LineStats,
   CharacterStats,
   Statistics,
   makeEmptyLineStatistics,
   makeEmptyCharacterStatistics,
-} from './stats';
+} from '../stats';
 
-export interface IParser {
-  readonly id:string;
-  readonly name:string;
-
-  parse(contents:string):Promise<Statistics>;
-};
-
-export default class Parser implements IParser {
-  readonly id:string = 'plain';
-
-  readonly name:string = 'Plain Text';
-
-  readonly whitespacePattern:RegExp = /\s/g;
-
-  readonly numericalPattern:RegExp = /\d/g;
-  
-  readonly alphabeticalPattern:RegExp = /[A-Za-z]/g;
-
+export default class CFamilyParser extends Parser {
   constructor() {
+    super();
+
+    this.extensions = [
+      // C, C++ and C#
+      'c',
+      'cpp',
+      'cc',
+      'cxx',
+      'cs',
+      'h',
+      'hpp',
+      'hx',
+      'hxx',
+
+      // JavaScript
+      'js',
+      'mjs',
+      'jsx',
+      'ts',
+      'tsx',
+
+      // Java / Kotlin
+      'java',
+      'kt',
+      'kts',
+      'ktm',
+
+      // PHP
+      'php',
+      'php5',
+
+      // Apple family
+      'm',
+      'mm',
+      'swift',
+
+      // Scala
+      'scala',
+      'sc',
+
+      // SASS/SCSS/LESS
+      'sass',
+      'scss',
+      'less',
+
+      // Other singular extensions
+      'go',
+      'rs',
+    ];
+
     this.parse = this.parse.bind(this);
   }
 

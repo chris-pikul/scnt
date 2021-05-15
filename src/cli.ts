@@ -23,13 +23,13 @@ const program = new Command()
 const options = program.opts();
 
 // Ensure that there is an actual target supplied.
-if (program.args.length < 1) {
+if(program.args.length < 1) {
   console.log(clrErr('You must provide a valid target, either a file or directory!'));
   program.help();
   process.exit(0);
 }
 
-if (options.verbose)
+if(options.verbose)
   console.log(clrDebug('Verbose messages'));
 
 console.log(clrInfo('Program is complete'));
