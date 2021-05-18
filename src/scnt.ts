@@ -82,7 +82,6 @@ export default class SCNT {
 
   private _charStats: CharacterStats = makeEmptyCharacterStatistics();
 
-
   constructor(options?:SCNTOpts) {
     this.options = { ...SCNT.DefaultOptions };
 
@@ -181,7 +180,7 @@ export default class SCNT {
       ext = extractExtension(fileName);
     else if(this.options.requireExtension || this.options.parseUnknownAs === 'reject')
       return;
-      
+
     // TODO: LEFT OFF HERE. Was going to add "parsers" now using the fileType
 
     // Make the final stats object for usage with functions and returning.
@@ -211,11 +210,15 @@ export default class SCNT {
   private decrement(stats: Statistics):void {
     const [ lines, chars ] = stats;
 
-    for(const [ key, value ] of Object.entries(lines))
-      this._lineStats[key] -= value;
+    for(const [ key, value ] of Object.entries(lines)) {
+      if(typeof this._lineStats[key] === 'number')
+        this._lineStats[key] -= value;
+    }
     
-    for(const [ key, value ] of Object.entries(chars))
-      this._charStats[key] -= value;
+    for(const [ key, value ] of Object.entries(chars)) {
+      if(typeof this._charStats[key] === 'number')
+        this._charStats[key] -= value;
+    }
   }
 
   /**
@@ -229,10 +232,14 @@ export default class SCNT {
   private increment(stats:Statistics):void {
     const [ lines, chars ] = stats;
 
-    for(const [ key, value ] of Object.entries(lines))
-      this._lineStats[key] += value;
+    for(const [ key, value ] of Object.entries(lines)) {
+      if(typeof this._lineStats[key] === 'number')
+        this._lineStats[key] += value;
+    }
     
-    for(const [ key, value ] of Object.entries(chars))
-      this._charStats[key] += value;
+    for(const [ key, value ] of Object.entries(chars)) {
+      if(typeof this._charStats[key] === 'number')
+        this._charStats[key] += value;
+    }
   }
 }
