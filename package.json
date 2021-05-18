@@ -7,8 +7,9 @@
     "clean": "node clean",
     "lint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:quiet": "npx eslint ./src --quiet --ext .js,.jsx,.ts,.tsx",
-    "test": "nyc mocha -r ts-node/register -r source-map-support/register 'tests/**/*.ts'",
-    "build": "npm run lint:quiet && && npm run test && npm run clean && tsc",
+    "test": "mocha -r ts-node/register -r source-map-support/register 'tests/**/*.ts'",
+    "coverage": "nyc npm run test",
+    "build": "npm run clean && tsc",
     "start": "npm run build && node ./lib/cli"
   },
   "repository": {
