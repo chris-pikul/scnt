@@ -7,7 +7,6 @@ import {
 } from '../stats';
 
 import { cleanExtension } from '../extensions';
-import { type } from 'os';
 
 /**
  * The base interface for a Parser
