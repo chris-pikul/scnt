@@ -6,7 +6,9 @@
   "scripts": {
     "clean": "node clean",
     "lint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
-    "build": "npx eslint ./src --quiet --ext .js,.jsx,.ts,.tsx && npm run clean && tsc",
+    "lint:quiet": "npx eslint ./src --quiet --ext .js,.jsx,.ts,.tsx",
+    "test": "nyc mocha -r ts-node/register -r source-map-support/register 'tests/**/*.ts'",
+    "build": "npm run lint:quiet && && npm run test && npm run clean && tsc",
     "start": "npm run build && node ./lib/cli"
   },
   "repository": {
@@ -37,12 +39,19 @@
   },
   "devDependencies": {
     "@tsconfig/node12": "^1.0.7",
+    "@types/chai": "^4.2.18",
+    "@types/mocha": "^8.2.2",
     "@types/node": "^15.0.2",
     "@typescript-eslint/eslint-plugin": "^4.23.0",
     "@typescript-eslint/parser": "^4.23.0",
+    "chai": "^4.3.4",
     "eslint": "^7.26.0",
     "eslint-plugin-node": "^11.1.0",
+    "mocha": "^8.4.0",
+    "nyc": "^15.1.0",
     "rimraf": "^3.0.2",
+    "source-map-support": "^0.5.19",
+    "ts-node": "^9.1.1",
     "typescript": "^4.2.4"
   },
   "engines": {

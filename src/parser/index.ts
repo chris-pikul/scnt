@@ -64,7 +64,7 @@ export interface IParser {
 };
 
 // Regular expresion matching what should be commonly acceptable extensions.
-const regexpExtension = /([^\0\\/:*'"<>|.]+)$/;
+const regexpExtension = /([\0\\/:*'"<>|.]+)/;
 
 /**
  * Internally used to clean and normalize a given extension string.
@@ -72,12 +72,12 @@ const regexpExtension = /([^\0\\/:*'"<>|.]+)$/;
  * @param ext String of a file extension
  * @returns String of a file extension
  */
-function cleanExtension(ext:string):string {
-  const match = (ext.toLocaleLowerCase().trim())
-    .match(regexpExtension);
-  if(match?.length === 2)
-    return match[1];
-  return '';
+export function cleanExtension(ext:string):string {
+  const lastDot = ext.lastIndexOf('.');
+  const cln = lastDot === -1 ? ext : ext.substr(lastDot + 1);
+  if(regexpExtension.test(cln))
+    return '';
+  return (cln.toLocaleLowerCase().trim());
 }
 
 export default class Parser implements IParser {
@@ -98,11 +98,11 @@ export default class Parser implements IParser {
    */
   protected extensions:string[] = [];
 
-  protected readonly whitespacePattern:RegExp = /\s/g;
+  protected readonly whitespacePattern:RegExp = /\s/;
 
-  protected readonly numericalPattern:RegExp = /\d/g;
+  protected readonly numericalPattern:RegExp = /\d/;
   
-  protected readonly alphabeticalPattern:RegExp = /[A-Za-z]/g;
+  protected readonly alphabeticalPattern:RegExp = /[A-Za-z]/;
 
   constructor() {
     this.parse = this.parse.bind(this);
@@ -127,14 +127,13 @@ export default class Parser implements IParser {
         // Check if the line was totally empty
         if(charIndex === 0)
           lineStats.empty++;
-
-        // Check if there was anything but whitespace
-        if(hadChar)
+        else if(hadChar)
           lineStats.source++;
         else
           lineStats.whitespace++;
-
+        
         charIndex = 0;
+        hadChar = false;
       };
 
       // Faster for iterator to simply go through them all.
@@ -145,11 +144,25 @@ export default class Parser implements IParser {
           // eslint-disable-next-line
           // Check if a Whitespace character
           case this.whitespacePattern.test(char):
-            // Additionally check if new-line
-            if(char === '\n')
-              incrementLine();
             
-            charStats.whitespace++;
+            // Additionally check if new-line
+            if(char === '\n') {
+              // Peek and check if we should correct for CRLF style
+              if(ind > 1) {
+                const peek = contents[ind - 1];
+                if(peek === '\r') {
+                  charIndex--;
+                  charStats.whitespace--;
+                }
+              }
+
+              incrementLine();
+
+              continue;
+            } else {
+              charStats.whitespace++;
+            }
+            
             break;
 
           // Check if Numerical
@@ -173,6 +186,10 @@ export default class Parser implements IParser {
         charIndex++;
       }
 
+      // Catch the last leftovers before EOF
+      incrementLine();
+
+      // Tally up the numbers
       charStats.source = charStats.numerical + charStats.alphabetical + charStats.special;
       charStats.total = charStats.source + charStats.whitespace;
       

@@ -81,7 +81,7 @@ export interface CharacterStats {
     /**
      * The total number of characters read.
      * 
-     * This is effectively the byte size of the files read.
+     * New-line combinations (CRLF or just LF) are NOT counted!
      */
     total: number;
 

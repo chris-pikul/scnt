@@ -8,6 +8,10 @@ import {
 } from '../stats';
 
 export default class CFamilyParser extends Parser {
+  public readonly id:string = 'cfamily';
+  
+  public readonly name:string = 'C-Family';
+
   constructor() {
     super();
 
@@ -188,7 +192,7 @@ export default class CFamilyParser extends Parser {
       testTotal += lineStats.inlineComments + lineStats.blockComments;
       testTotal += lineStats.whitespace + lineStats.empty;
       if(testTotal !== lineStats.total)
-        console.error(`Inconsistant counts, expected ${lineStats.total} lines but got ${testTotal} instead.`);
+        console.error(`C-Family got inconsistant counts, expected ${lineStats.total} lines but got ${testTotal} instead.`);
 
       resolve([ lineStats, charStats ]);
     });
