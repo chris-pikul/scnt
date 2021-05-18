@@ -7,6 +7,7 @@ import {
 } from '../stats';
 
 import { cleanExtension } from '../extensions';
+import { type } from 'os';
 
 /**
  * The base interface for a Parser
@@ -33,6 +34,13 @@ export interface IParser {
    * @param contents File contents
    */
   parse(contents:string):Promise<Statistics>;
+
+  /**
+   * Returns a copy of the current list of extensions.
+   * 
+   * @returns Array of strings
+   */
+  getExtensions():string[];
 
   /**
    * Checks if the given extension is handled by this parser (reported to be).
@@ -89,12 +97,16 @@ export default class Parser implements IParser {
   
   protected readonly alphabeticalPattern:RegExp = /[A-Za-z]/;
 
-  constructor() {
+  constructor(extensions?:(string|string[])) {
     this.parse = this.parse.bind(this);
 
+    this.getExtensions = this.getExtensions.bind(this);
     this.hasExtension = this.hasExtension.bind(this);
     this.addExtension = this.addExtension.bind(this);
     this.removeExtension = this.removeExtension.bind(this);
+
+    if(typeof extensions !== 'undefined')
+      this.addExtension(extensions);
   }
 
   public parse(contents:string):Promise<Statistics> {
@@ -186,6 +198,15 @@ export default class Parser implements IParser {
   }
 
   /**
+   * Returns a copy of the current list of extensions.
+   * 
+   * @returns Array of strings
+   */
+  getExtensions():string[] {
+    return [ ...this.extensions ];
+  }
+
+  /**
    * Checks if the given extension is handled by this parser (reported to be).
    * 
    * @param ext String of a file extension
@@ -202,10 +223,20 @@ export default class Parser implements IParser {
    * case can be because the extension added is invalid (empty, or
    * generally malformed), or because it already existed.
    * 
-   * @param ext String of a file extension
+   * @param ext String of a file extension, OR an array of strings
    * @returns True if the extension was added
    */
-  public addExtension(ext:string):boolean {
+  public addExtension(ext:(string|string[])):boolean {
+    // Process the array if one is provided
+    if(typeof ext === 'object' && Array.isArray(ext)) {
+      return ext.map(ent => this.addExtension(ent))
+        .reduce((acc, cur) => (acc || cur), false);
+    }
+
+    if(typeof ext !== 'string')
+      throw new TypeError(`Invalid type applied to addExtension, expected either a string or array of strings, instead found "${typeof ext}"!`);
+    
+    // Otherwise treat as a string
     const cln = cleanExtension(ext);
     if(cln === '' || this.extensions.includes(cln))
       return false;
