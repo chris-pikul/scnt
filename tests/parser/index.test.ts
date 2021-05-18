@@ -1,4 +1,4 @@
-import Parser, { cleanExtension } from '../../src/parser';
+import Parser from '../../src/parser';
 
 import { describe } from 'mocha';
 import { expect, assert } from 'chai';
@@ -8,24 +8,6 @@ describe('Parser', () => {
 
   it('has the known "plain" id', () => expect(obj).to.have.property('id', 'plain'));
   it('has the known "Plain Test" name', () => expect(obj).to.have.property('name', 'Plain Text'));
-
-  describe('#cleanExtension()', () => {
-    it('rejects bad characters', () => {
-      expect(cleanExtension('bad\/ext')).to.equal('');
-    });
-
-    it('crops dots', () => {
-      expect(cleanExtension('some.jpg')).to.equal('jpg');
-    });
-
-    it('normalizes them', () => {
-      expect(cleanExtension('JpEg ')).to.equal('jpeg');
-    });
-
-    it('allows standards', () => {
-      expect(cleanExtension('jpeg')).to.equal('jpeg');
-    });
-  })
 
   describe('has/add/remove extensions', () => {
     it('returns false to empty string', () => {

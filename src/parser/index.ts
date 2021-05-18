@@ -6,6 +6,8 @@ import {
   makeEmptyCharacterStatistics,
 } from '../stats';
 
+import { cleanExtension } from '../extensions';
+
 /**
  * The base interface for a Parser
  */
@@ -62,23 +64,6 @@ export interface IParser {
    */
   removeExtension(ext:string):boolean;
 };
-
-// Regular expresion matching what should be commonly acceptable extensions.
-const regexpExtension = /([\0\\/:*'"<>|.]+)/;
-
-/**
- * Internally used to clean and normalize a given extension string.
- * 
- * @param ext String of a file extension
- * @returns String of a file extension
- */
-export function cleanExtension(ext:string):string {
-  const lastDot = ext.lastIndexOf('.');
-  const cln = lastDot === -1 ? ext : ext.substr(lastDot + 1);
-  if(regexpExtension.test(cln))
-    return '';
-  return (cln.toLocaleLowerCase().trim());
-}
 
 export default class Parser implements IParser {
   /**

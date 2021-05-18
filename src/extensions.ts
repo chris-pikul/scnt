@@ -1,122 +1,54 @@
 /**
- * Type for an object holding a string key, and string array values.
- */
-export type ExtensionMap = {
-  [key:string]:string[]
-};
-
-/**
- * The extension map holds the information mapping a file type to its accepted
- * extensions. This information is held as an object with string keys matching
- * to the file type, with the value being a string array of accepted extensions.
- */
-const extensionMap:ExtensionMap = {
-  javascript: [
-    'js',
-    'jsx',
-    'mjs',
-  ],
-};
-
-/**
- * Checks if the extension map contains a listing for the given file type.
+ * Checks to see if the provided filename has an extension.
+ * This is a simple 
  * 
- * @param type String type to check for
- * @returns True if the extension map contains that type
+ * @param fileName string filename
+ * @returns boolean true if an extension exists
  */
-export function hasType(type:string):boolean {
-  const cleanType = type.toLowerCase().trim();
-
-  return !!(extensionMap[cleanType]);
+export function hasExtension(fileName:string):boolean {
+  if(typeof fileName !== 'string' || fileName.length === 0)
+    return false;
+  const lastDot = fileName.lastIndexOf('.');
+  return lastDot >= 1 && (fileName.length - lastDot) > 1;
 }
 
-/**
- * Returns the extensions available to a given type. Will return an empty array
- * if no valid type is found.
- * 
- * @param type String type to check for
- * @returns Array of string extensions, or empty if no type matches
- */
-export function getTypeExtensions(type:string):string[] {
-  const cleanType = type.toLowerCase().trim();
-
-  if(!extensionMap[cleanType])
-    return [] as string[];
-
-  return extensionMap[cleanType];
-}
+// Regular expresion matching what should be commonly acceptable extensions.
+const regexpExtension = /([\0\\/:*'"<>|.]+)/;
 
 /**
- * Searches the extension map for a type that matches the provided one.
- * Will return the type name if one is found, otherwise an empty string.
+ * Internally used to clean and normalize a given extension string.
  * 
- * @param ext String extension to search for
- * @returns The type string, or an empty string if nothing matches
+ * @param ext String of a file extension
+ * @returns String of a file extension
  */
-export function getExtensionType(ext:string):string {
-  const cleanExt = ext.toLowerCase().trim();
-
-  if(cleanExt.length === 0)
+export function cleanExtension(ext:string):string {
+  if(typeof ext !== 'string' || ext.length === 0)
     return '';
-
-  for(const [ type, arr ] of Object.entries(extensionMap)) {
-    if(arr.includes(cleanExt))
-      return type;
-  }
-
-  return '';
+  
+  const lastDot = ext.lastIndexOf('.');
+  const cln = lastDot === -1 ? ext : ext.substr(lastDot + 1);
+  if(regexpExtension.test(cln))
+    return '';
+  
+  return (cln.toLocaleLowerCase().trim());
 }
 
 /**
- * Adds a new type listing to the extension map.
+ * Attempts to extract the extension from a given filename.
  * 
- * If the type identifier already exists, then the extensions supplied are
- * merged into it.
+ * Will return undefined if the string is empty, there is no period character
+ * in the filename, or if the period is the first and only character.
  * 
- * Otherwise a new listing is created.
- * 
- * All type keys and extension keys are normalized before usage.
- * 
- * @param type String type identifier
- * @param exts Array of string extensions
+ * @param fileName string filename
+ * @returns string or undefined
  */
-export function addExtensionType(type:string, exts:string[] = []):void {
-  const cleanType = type.toLowerCase().trim();
+export function extractExtension(fileName:string):string {
+  if(!hasExtension(fileName))
+    return '';
+  
+  // Find the last dot character in the name
+  const lastDotPos = fileName.lastIndexOf('.');
 
-  if(cleanType.length === 0)
-    return;
-
-  if(extensionMap[cleanType]) {
-    // Normalize the extensions, remove duds, de-dupe them, then add them
-    exts.map(ext => ext.toLowerCase().trim())
-      .filter(ext => !!(ext && ext.length > 0))
-      .filter(ext => !extensionMap[cleanType].includes(ext))
-      .forEach(ext => extensionMap[cleanType].push(ext));
-  } else {
-    extensionMap[cleanType] = exts.map(ext => ext.toLowerCase().trim())
-      .filter(ext => !!(ext && ext.length > 0));
-  }
-}
-
-/**
- * Adds new extensions to an existing type.
- * 
- * Will not create a new type if one does not match, use `addExtensionType` for
- * that functionality.
- * 
- * Each extension is normalized before adding, and duplicates will be ignored.
- * 
- * @param type String type to add to
- * @param exts Array of string extensions
- */
-export function addExtensionsToType(type:string, exts:string[]):void {
-  const cleanType = type.toLowerCase().trim();
-
-  if(extensionMap[cleanType]) {
-    // Normalize the extensions, remove duds, de-dupe them, then add them
-    exts.map(ext => ext.toLowerCase().trim())
-      .filter(ext => !!(ext && ext.length > 0))
-      .filter(ext => !extensionMap[cleanType].includes(ext))
-      .forEach(ext => extensionMap[cleanType].push(ext));
-  }
+  // Return the extension, without the dot and normalized
+  return cleanExtension(fileName.substr(lastDotPos + 1));
 }

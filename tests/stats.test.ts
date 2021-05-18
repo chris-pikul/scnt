@@ -72,17 +72,17 @@ const testEmptyCharacters = (obj:any) => {
 };
 
 describe('Statistics Objects', () => {
-  describe('makeEmptyLineStatistics()', () => {
+  describe('#makeEmptyLineStatistics()', () => {
     const obj = makeEmptyLineStatistics();
     testEmptyLines(obj);
   });
 
-  describe('makeEmptyCharacterStatistics()', () => {
+  describe('#makeEmptyCharacterStatistics()', () => {
     const obj = makeEmptyCharacterStatistics();
     testEmptyCharacters(obj);
   });
 
-  describe('makeEmptyStatistics()', () => {
+  describe('#makeEmptyStatistics()', () => {
     const obj = makeEmptyStatistics();
 
     it('should be an array with length of 2', () => {
