@@ -1,4 +1,8 @@
-import { getExtensionType } from './extensions';
+import {
+  hasExtension,
+  extractExtension,
+} from './extensions';
+
 import {
   LineStats,
   CharacterStats,
@@ -35,6 +39,17 @@ export interface SCNTOptions {
   parseUnknownAs: string;
 };
 
+export interface OptionalSCNTOptions {
+  requireExtension?: boolean;
+  parseUnknownAs?: string;
+};
+
+export type SCNTOpts = (SCNTOptions | OptionalSCNTOptions);
+
+export type SCNTFileMap = Map<string, Statistics>;
+
+export type SCNTStatistics = [SCNTFileMap, LineStats, CharacterStats];
+
 /**
  * Source Code Counter
  * 
@@ -53,35 +68,41 @@ export default class SCNT {
     parseUnknownAs: 'reject',
   };
 
+  static readonly EmptyStatistics: SCNTStatistics = [
+    new Map<string, Statistics>(),
+    makeEmptyLineStatistics(),
+    makeEmptyCharacterStatistics(),
+  ];
+
   options: SCNTOptions;
 
-  private _filesRead:Map<string, Statistics>;
+  private _filesRead: SCNTFileMap;
 
   private _lineStats: LineStats = makeEmptyLineStatistics();
 
   private _charStats: CharacterStats = makeEmptyCharacterStatistics();
 
 
-  constructor(options?:SCNTOptions) {
-    // Apply the options by mixing with the defaults.
-    this.options = {
-      ...SCNT.DefaultOptions,
-      ...(options || {}),
-    };
+  constructor(options?:SCNTOpts) {
+    this.options = { ...SCNT.DefaultOptions };
 
     this._filesRead = new Map();
 
     this.reset = this.reset.bind(this);
+    this.applyOptions = this.applyOptions.bind(this);
     this.process = this.process.bind(this);
 
     this.decrement = this.decrement.bind(this);
     this.increment = this.increment.bind(this);
+
+    if(options)
+      this.applyOptions(options);
   }
 
   /**
    * Total files read in completion so far.
    */
-  get filesRead():Map<string, Statistics> {
+  get filesRead(): SCNTFileMap {
     return new Map(this._filesRead);
   }
 
@@ -106,7 +127,7 @@ export default class SCNT {
    * const [ files, line, char ] = scnt.statistics;
    * ```
    */
-  get statistics():[Map<string, Statistics>, LineStats, CharacterStats] {
+  get statistics(): SCNTStatistics {
     return [
       this.filesRead,
       this.lineStatistics,
@@ -125,6 +146,30 @@ export default class SCNT {
     this._charStats = makeEmptyCharacterStatistics();
   };
 
+  /**
+   * Applies the properties within the provided opts parameter to the objects
+   * options.
+   * 
+   * Basically, just sets the options by mixing the defaults with your provided
+   * overrides to form a complete options object.
+   * 
+   * Any properties not considered a "valid" option key are still added.
+   * 
+   * @param opts Object of options
+   * @returns The resulting options applied
+   */
+  public applyOptions(opts:SCNTOpts):SCNTOptions {
+    if(!opts)
+      return this.options;
+
+    this.options = {
+      ...SCNT.DefaultOptions,
+      ...(opts || {}),
+    };
+
+    return this.options;
+  }
+
   public process(fileName:string, contents:string):(Statistics|undefined) {
     // Reject if the contents are "empty"
     if(contents.length === 0)
@@ -132,21 +177,11 @@ export default class SCNT {
 
     // Run the extension gambit if we need to
     let ext = '';
-    if(this.hasExtension(fileName))
-      ext = this.extractExtension(fileName);
+    if(hasExtension(fileName))
+      ext = extractExtension(fileName);
     else if(this.options.requireExtension || this.options.parseUnknownAs === 'reject')
       return;
-    
-    // Find the matching type for the extension
-    let fileType = getExtensionType(ext);
-    if(fileType.length === 0) {
-      // Bail if we don't want to handle unknowns
-      if(this.options.parseUnknownAs === 'reject')
-        return;
-
-      fileType = this.options.parseUnknownAs;
-    }
-
+      
     // TODO: LEFT OFF HERE. Was going to add "parsers" now using the fileType
 
     // Make the final stats object for usage with functions and returning.
@@ -199,32 +234,5 @@ export default class SCNT {
     
     for(const [ key, value ] of Object.entries(chars))
       this._charStats[key] += value;
-  }
-
-  private hasExtension(fileName:string):boolean {
-    if(fileName.length === 0)
-      return false;
-
-    return fileName.lastIndexOf('.') >= 1;
-  }
-
-  /**
-   * Attempts to extract the extension from a given filename.
-   * 
-   * Will return undefined if the string is empty, there is no period character
-   * in the filename, or if the period is the first and only character.
-   * 
-   * @param fileName string filename
-   * @returns string or undefined
-   */
-  private extractExtension(fileName:string):string {
-    if(!this.hasExtension(fileName))
-      return '';
-    
-    // Find the last dot character in the name
-    const lastDotPos = fileName.lastIndexOf('.');
-
-    // Return the extension, without the dot
-    return fileName.substr(lastDotPos + 1);
   }
 }
