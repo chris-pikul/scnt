@@ -316,6 +316,7 @@ module.exports = {
     'prefer-destructuring': 'warn',
     'prefer-numeric-literals': 'error',
     'prefer-template': 'error',
+    'prefer-rest-params': 'off',
     'rest-spread-spacing': [ 'error', 'never' ],
     'template-curly-spacing': [ 'warn', 'never' ],
     'yield-star-spacing': [
