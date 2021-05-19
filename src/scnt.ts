@@ -276,6 +276,8 @@ export default class SCNT {
   public hasParser(parser:(string|Parser)):boolean {
     if(typeof parser === 'string' || (typeof parser === 'object' && parser instanceof Parser)) {
       const id = typeof parser === 'string' ? parser : parser.id;
+      if(id === '')
+        return false;
       return this._parsers.findIndex(ent => ent.id === id) !== -1;
     }
     return false;
@@ -312,18 +314,20 @@ export default class SCNT {
    * @param parser Single, or array, of Parser objects
    */
   public addParser(parser:(Parser|Parser[])):void {
-    if(typeof parser === 'undefined' || parser == null)
+    if(typeof parser === 'undefined' || parser == null) {
       throw new TypeError('Attempted to call SCNT.addParser() with an undefined|null parameter');
-
-    if(typeof parser === 'object' && Array.isArray(parser))
-      parser.forEach(this.addParser);
-
-    if(parser instanceof Parser) {
-      const exists = this._parsers.findIndex(ent => ent.id === parser.id);
-      if(exists === -1)
-        this._parsers.push(parser);
+    } else if(typeof parser === 'object') {
+      if(Array.isArray(parser)) {
+        parser.forEach(this.addParser);
+      } else if(parser instanceof Parser) {
+        const exists = this._parsers.findIndex(ent => ent.id === parser.id);
+        if(exists === -1)
+          this._parsers.push(parser);
+      } else {
+        throw new TypeError(`Called SCNT.addParser() with an object that is not an instance of Parser, found "${typeof parser}" instead`);
+      }
     } else {
-      throw new TypeError(`Called SCNT.addParser() with an object that is not an instance of Parser`);
+      throw new TypeError('Must call SCNT.addParser() with an array, or a Parser object');
     }
   }
 

@@ -142,6 +142,117 @@ describe('SCNT Class', () => {
     });
   });
 
+  describe('#hasParser()', () => {
+    const obj = new SCNT();
+    const parser = new Parser();
+    const parser2 = new Parser('plain2');
+
+    it('false as default', () => {
+      expect(obj.hasParser('any')).to.equal(false);
+    });
+
+    it('true after adding one, using string', () => {
+      obj.addParser(parser);
+      expect(obj.hasParser('plain')).to.equal(true);
+    });
+
+    it('true after adding one, by object', () => {
+      obj.addParser(parser);
+      expect(obj.hasParser(parser)).to.equal(true);
+    });
+
+    it('false after adding, with different string', () => {
+      obj.addParser(parser);
+      expect(obj.hasParser('test')).to.equal(false);
+    });
+
+    it('false after adding one, using another object', () => {
+      obj.addParser(parser);
+      expect(obj.hasParser(parser2)).to.equal(false);
+    });
+  });
+
+  describe('#getParser()', () => {
+    const obj = new SCNT();
+    const parser = new Parser();
+    const parser2 = new Parser('plain2');
+
+    it('undefined as default', () => {
+      expect(obj.getParser('')).to.be.undefined;
+    });
+
+    it('returns one by string', () => {
+      obj.addParser(parser);
+      expect(obj.getParser('plain')).to.equal(parser);
+    });
+
+    it('returns one by object', () => {
+      obj.addParser(parser);
+      expect(obj.getParser(parser)).to.equal(parser);
+    });
+
+    it('undefined on different string', () => {
+      obj.addParser(parser);
+      expect(obj.getParser('test')).to.be.undefined;
+    });
+
+    it('undefined on different object', () => {
+      obj.addParser(parser);
+      expect(obj.getParser(parser2)).to.be.undefined;
+    });
+  });
+
+  describe('#addParser()', () => {
+    const obj = new SCNT();
+    const parser = new Parser();
+
+    it('adds a Parser object', () => {
+      obj.addParser(parser);
+      expect(obj['_parsers']).to.include(parser);
+    });
+
+    it('does not add duplicates', () => {
+      obj['_parsers'] = [];
+
+      obj.addParser(parser);
+      obj.addParser(parser);
+
+      expect(obj['_parsers']).to.be.an('array').and.have.lengthOf(1);
+    });
+
+    it('adds an array of Parsers', () => {
+      obj['_parsers'] = [];
+
+      const parser2 = new Parser('plain2');
+      const parser3 = new Parser('plain3');
+
+      obj.addParser([ parser2, parser3 ]);
+      expect(obj['_parsers']).to.be.an('array').and.have.lengthOf(2);
+      expect(obj.hasParser(parser2)).to.be.true;
+      expect(obj.hasParser(parser3)).to.be.true;
+    });
+
+    it('throws on undefined and null', () => {
+      // @ts-ignore
+      expect(() => obj.addParser(undefined)).to.throw();
+
+      // @ts-ignore
+      expect(() => obj.addParser(null)).to.throw();
+    });
+
+    it('throws on other types', () => {
+      // @ts-ignore
+      expect(() => obj.addParser(123)).to.throw();
+      // @ts-ignore
+      expect(() => obj.addParser({ some: 'test' })).to.throw();
+    });
+
+    it('throws on array of non-Parsers', () => {
+      // @ts-ignore
+      expect(() => obj.addParser([ { some: test }])).to.throw();
+    });
+  });
+
   describe('#hasParserForExtension()', () => {
     const obj = new SCNT();
 

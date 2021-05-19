@@ -96,7 +96,15 @@ export default class Parser implements IParser {
   
   protected readonly alphabeticalPattern:RegExp = /[A-Za-z]/;
 
-  constructor(extensions?:(string|string[])) {
+  /**
+   * Creates a new Parser object. All parameters are considered optional and are
+   * provided for quickly composing new Parser types using this base class.
+   * 
+   * @param id Optional ID to override the class default
+   * @param name Optional name to override the class default
+   * @param extensions Optional single, or array, of file extensions
+   */
+  constructor(id?:(string|null), name?:(string|null), extensions?:(string|string[]|null)) {
     this.parse = this.parse.bind(this);
 
     this.getExtensions = this.getExtensions.bind(this);
@@ -104,7 +112,13 @@ export default class Parser implements IParser {
     this.addExtension = this.addExtension.bind(this);
     this.removeExtension = this.removeExtension.bind(this);
 
-    if(typeof extensions !== 'undefined')
+    if(typeof id === 'string' && id.length > 0)
+      this.id = id;
+
+    if(typeof name === 'string' && name.length > 0)
+      this.name = name;
+
+    if(typeof extensions === 'string' || (typeof extensions === 'object' && Array.isArray(extensions)))
       this.addExtension(extensions);
   }
 
