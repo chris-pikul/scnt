@@ -74,7 +74,7 @@ export default class SCNT {
 
   options: SCNTOptions;
 
-  parsers: Array<Parser>;
+  private _parsers: Array<Parser>;
 
   private _filesRead: SCNTFileMap;
 
@@ -85,7 +85,7 @@ export default class SCNT {
   constructor(options?:SCNTOpts) {
     this.options = { ...SCNT.DefaultOptions };
 
-    this.parsers = [];
+    this._parsers = [];
 
     this._filesRead = new Map();
 
@@ -96,9 +96,16 @@ export default class SCNT {
     this.decrement = this.decrement.bind(this);
     this.increment = this.increment.bind(this);
 
+    this.hasParser = this.hasParser.bind(this);
+    this.getParser = this.getParser.bind(this);
+    this.addParser = this.addParser.bind(this);
+    this.replaceParser = this.replaceParser.bind(this);
+    this.removeParser = this.removeParser.bind(this);
+    this.getAllParsers = this.getAllParsers.bind(this);
+    this.clearParsers = this.clearParsers.bind(this);
+
     this.hasParserForExtension = this.hasParserForExtension.bind(this);
     this.getParserForExtension = this.getParserForExtension.bind(this);
-    this.addParserForExtension = this.addParserForExtension.bind(this);
 
     if(options)
       this.applyOptions(options);
@@ -106,6 +113,7 @@ export default class SCNT {
 
   /**
    * Total files read in completion so far.
+   * Immutable Map copy.
    */
   get filesRead(): SCNTFileMap {
     return new Map(this._filesRead);
@@ -113,6 +121,7 @@ export default class SCNT {
 
   /**
    * The collected statistics on the number of lines processed.
+   * Immutable object copy.
    */
   get lineStatistics():LineStats {
     return { ...this._lineStats };
@@ -120,6 +129,7 @@ export default class SCNT {
 
   /**
    * The collected statistics on the number of characters processed.
+   * Immutable object copy.
    */
   get characterStatistics():CharacterStats {
     return { ...this._charStats };
@@ -131,6 +141,7 @@ export default class SCNT {
    * ```
    * const [ files, line, char ] = scnt.statistics;
    * ```
+   * Immutable object copy.
    */
   get statistics(): SCNTStatistics {
     return [
@@ -257,6 +268,158 @@ export default class SCNT {
   }
 
   /**
+   * Checks if the given Parser, or Parser ID, is registered.
+   * 
+   * @param parser Either a Parser object, or string matching Parser.id
+   * @returns boolean true if a match is found
+   */
+  public hasParser(parser:(string|Parser)):boolean {
+    if(typeof parser === 'string' || (typeof parser === 'object' && parser instanceof Parser)) {
+      const id = typeof parser === 'string' ? parser : parser.id;
+      return this._parsers.findIndex(ent => ent.id === id) !== -1;
+    }
+    return false;
+  }
+
+  /**
+   * Attempts to return a registered Parser.
+   * 
+   * - If a Parser object is supplied, it's ID is used to match.
+   * - If a string is given, it is used as an ID matcher.
+   * 
+   * @param parser Either a Parser object, or a string matching Parser.id
+   * @returns Parser if found, undefined otherwise
+   */
+  public getParser(parser:(string|Parser)):(Parser|undefined) {
+    if(typeof parser === 'string' || (typeof parser === 'object' && parser instanceof Parser)) {
+      const id = typeof parser === 'string' ? parser : parser.id;
+      return this._parsers.find(ent => ent.id === id);
+    }
+  }
+
+  /**
+   * Adds a new parser, or array of parsers, to this SCNT object for processing.
+   * 
+   * An array of parsers will be reduced down to Parser objects
+   * (if nested arrays).
+   * 
+   * Individual Parser objects must inherit from Parser class.
+   * Duplicate parser objects will be skipped, these are determined by the
+   * `Parser.id` property.
+   * 
+   * To overwrite parsers see `SCNT.replaceParser()`
+   * 
+   * @param parser Single, or array, of Parser objects
+   */
+  public addParser(parser:(Parser|Parser[])):void {
+    if(typeof parser === 'undefined' || parser == null)
+      throw new TypeError('Attempted to call SCNT.addParser() with an undefined|null parameter');
+
+    if(typeof parser === 'object' && Array.isArray(parser))
+      parser.forEach(this.addParser);
+
+    if(parser instanceof Parser) {
+      const exists = this._parsers.findIndex(ent => ent.id === parser.id);
+      if(exists === -1)
+        this._parsers.push(parser);
+    } else {
+      throw new TypeError(`Called SCNT.addParser() with an object that is not an instance of Parser`);
+    }
+  }
+
+  /**
+   * Replaces all occurances of a Parser registered with a newly provided one.
+   * They are searched by either ID, or Parser object. When arrays are provided
+   * it is done recursively.
+   * 
+   * If both the parser, and replacement, parameters are single Parser objects
+   * they are replaced as stands 1 for 1.
+   * 
+   * By all occurances, I mean all, it is recursively searched for all matches
+   * and each is replaced. This matching is done by ID property.
+   * 
+   * If the provided parser parameter is an array, it will be recursivly used to
+   * replace parsers. The replacement parameter can than either be an array of
+   * matching dimensions in which the replacement is done 1:1, or can be
+   * singular to replace all occurances in the parser array with the single
+   * replacement.
+   * 
+   * @param parser Single, or array, of Parser objects
+   */
+  public replaceParser(parser:(string|Parser|string[]|Parser[]), replacement:(Parser|Parser[])):void {
+    if(typeof parser === 'undefined' || parser == null)
+      throw new TypeError('Attempted to call SCNT.replaceParser() with a null or undefined parser parameter');
+
+    if(typeof replacement !== 'object' || replacement == null)
+      throw new TypeError('Attempted to call SCNT.replaceParser() with a null or non-object replacement parameter');
+
+    if(Array.isArray(parser)) {
+      if(Array.isArray(replacement)) {
+        if(replacement.length < parser.length)
+          throw new TypeError('The supplied replacement array for SCNT.replaceParser() is smaller than the parser array supplied');
+        parser.forEach((ent:(string|Parser), ind:number) => this.replaceParser(ent, replacement[ind]));
+      } else {
+        parser.forEach((ent:(string|Parser)) => this.replaceParser(ent, replacement));
+      }
+    }
+
+    if((replacement instanceof Parser) === false)
+      throw new TypeError('SCNT.replaceParser() cannot replace a Parser with an object that is NOT a Parser');
+
+    if(typeof parser !== 'string' && !(parser instanceof Parser))
+      throw new TypeError(`Called SCNT.replaceParser() with an object that is not an instance of Parser`);
+
+    const id = typeof parser === 'string' ? parser : parser.id;
+    let ind = 0;
+    while(ind !== -1) {
+      ind = this._parsers.findIndex(ent => ent.id === id);
+      if(ind !== -1)
+        this._parsers[ind] = replacement as Parser;
+    }
+  }
+
+  /**
+   * Removes any matching parsers from the list of registered ones.
+   * 
+   * - If an array is provided, this function is called recursively.
+   * - When a string is provided it is used directly to match against the IDs.
+   * - If a Parser object is provided, then the ID is taken from it to match
+   * against.
+   * 
+   * @param parser string|Parser|string[]|Parser[] Parser ID(s) or Parser(s)
+   */
+  public removeParser(parser:(string|Parser|string[]|Parser[])):void {
+    if(typeof parser === 'undefined' || parser == null)
+      throw new TypeError('Attempted to call SCNT.removeParser() with an undefined|null parameter');
+
+    if(typeof parser === 'object' && Array.isArray(parser))
+      parser.forEach(this.removeParser);
+
+    if(typeof parser === 'string')
+      this._parsers = this._parsers.filter(ent => ent.id !== parser);
+    else if(typeof parser === 'object' && parser instanceof Parser)
+      this._parsers = this._parsers.filter(ent => ent.id !== parser.id);
+    else
+      throw new TypeError('Invalid object type supplied to SCNT.removeParser()');
+  }
+
+  /**
+   * Returns all the registered parsers.
+   * This is an immutable copy.
+   * @returns Array of Parser objects
+   */
+  public getAllParsers():Parser[] {
+    return [ ...this._parsers ];
+  }
+
+  /**
+   * Removes all parsers from the list of registered ones.
+   */
+  public clearParsers():void {
+    this._parsers = [];
+  }
+
+  /**
    * Searches the list of registered parsers for the first one that matches
    * the given extension. Returns true if one is found. Will use the
    * `cleanExtension()` utility to normalize the extension before usage.
@@ -270,7 +433,7 @@ export default class SCNT {
     if(!clean || clean === '')
       return false;
 
-    return this.parsers.findIndex(ent => ent.hasExtension(clean)) !== -1;
+    return this._parsers.findIndex(ent => ent.hasExtension(clean)) !== -1;
   }
 
   /**
@@ -287,62 +450,6 @@ export default class SCNT {
     if(!clean || clean === '')
       return null;
 
-    return this.parsers.find(ent => ent.hasExtension(clean)) || null;
-  }
-
-  /**
-   * Adds a parser for a given extension.
-   * 
-   * If a parser already exists with the given extension registered, the
-   * "override" parameter is used to determine if:
-   *  - Override is `true`, then the extension is removed from the existing
-   *  parser, and added to the new one. If this removal causes the parser to
-   *  have no registered extensions, it is removed outright from the list.
-   *  - Override is `false`, then nothing is altered and the parser is not
-   *  adde or modified.
-   * 
-   * If the parser being added already exists (checked by `id`) than the
-   * parser is told to add the extension provided (it should de-dupe on its own)
-   * and is then added to the list of accepted parsers.
-   *  
-   * @param ext file extension
-   * @param parser Parser class object
-   * @param override boolean if this parser should take over for the extension
-   */
-  public addParserForExtension(ext:string, parser:Parser, override = false):void {
-    if(!parser)
-      return;
-
-    const clean = cleanExtension(ext);
-    if(!clean || clean === '')
-      return;
-
-    // Check if this extension is already parsed
-    const ind = this.parsers.findIndex(ent => ent.hasExtension(clean));
-    if(ind !== -1) {
-      // If we allow overriding, we can do that, otherwise skip it.
-      if(override) {
-        // Use the immutable version so the extension get's removed
-        this.parsers[ind].removeExtension(clean);
-
-        // Check if the parser is empty, if so, remove it.
-        if(this.parsers[ind].getExtensions().length === 0)
-          this.parsers.splice(ind, 1);
-      } else {
-        // Shortcut out
-        return;
-      }
-    }
-
-    // Check if the parser is already added
-    const exists = this.parsers.findIndex(ent => ent.id === parser.id);
-    if(exists === -1) {
-      // Push the new one so it's in the list
-      parser.addExtension(clean);
-      this.parsers.push(parser);
-    } else {
-      // Just add the extension, the parser should de-dupe it.
-      this.parsers[exists].addExtension(clean);
-    }
+    return this._parsers.find(ent => ent.hasExtension(clean)) || null;
   }
 }

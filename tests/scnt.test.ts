@@ -162,7 +162,7 @@ describe('SCNT Class', () => {
       const parser = new Parser();
       parser.addExtension('jpg');
 
-      obj.parsers.push(parser);
+      obj.addParser(parser);
 
       expect(obj.hasParserForExtension('jpg')).to.equal(true);
     });
@@ -188,84 +188,11 @@ describe('SCNT Class', () => {
       const parser = new Parser();
       parser.addExtension('jpg');
 
-      obj.parsers.push(parser);
+      obj.addParser(parser);
 
       expect(obj.getParserForExtension('jpg')).to.equal(parser);
     });
   });
 
-  describe('#addParserForExtension()', () => {
-    const obj = new SCNT();
-
-    const parser1 = new Parser([ 'jpg', 'jpeg' ]);
-    // @ts-ignore
-    parser1.id = 'Parser 1';
-
-    const parser2 = new Parser([ 'bmp', 'bitmap' ]);
-    // @ts-ignore
-    parser2.id = 'Parser 2';
-
-    it('accepts, but does nothing with a null extension', () => {
-      obj.addParserForExtension('', parser1);
-      expect(obj.parsers).to.have.lengthOf(0);
-    });
-    
-    it('accepts, but does nothing with a null parser', () => {
-      // @ts-ignore
-      obj.addParserForExtension('ext', null);
-      expect(obj.parsers).to.have.lengthOf(0);
-    });
-
-    it('adds a fresh parser', () => {
-      obj.addParserForExtension('jpg', parser1);
-      expect(obj.hasParserForExtension('jpg')).to.equal(true);
-    });
-
-    it('does not add the same, twice', () => {
-      obj.addParserForExtension('jpg', parser1);
-      obj.addParserForExtension('jpg', parser1);
-
-      expect(obj.parsers).to.have.lengthOf(1);
-      expect(obj.parsers[0]).to.equal(parser1);
-    });
-
-    it('does not override if not told too', () => {
-      obj.addParserForExtension('jpg', parser2);
-
-      expect(obj.parsers).to.have.lengthOf(1);
-      expect(obj.parsers[0]).to.equal(parser1);
-      expect(obj.parsers[0].hasExtension('jpg')).to.equal(true);
-    });
-
-    it('does override if told too', () => {
-      obj.addParserForExtension('jpg', parser2, true);
-
-      expect(obj.parsers).to.have.lengthOf(2);
-      expect(obj.parsers[0]).to.equal(parser1);
-      expect(obj.parsers[0].hasExtension('jpg')).to.equal(false);
-      expect(obj.parsers[1]).to.equal(parser2);
-      expect(obj.parsers[1].hasExtension('jpg')).to.equal(true);
-    });
-
-    it('expands the parser ext list if that parser already exists', () => {
-      obj.addParserForExtension('gif', parser2);
-
-      expect(obj.parsers, 'parsers length').to.have.lengthOf(2);
-      expect(obj.parsers[1], 'second parser equals parser2').has.property('id', 'Parser 2');
-      expect(obj.parsers[1].hasExtension('gif'), 'second parser has gif').to.equal(true);
-      expect(obj.parsers[0].hasExtension('gif'), 'first parser has gif').to.equal(false);
-    });
-
-    it('removes a parser if it becomes obsolete (empty extensions)', () => {
-      const parser3 = new Parser(['png', 'pdf']);
-      // @ts-ignore
-      parser3.id = 'Parser 3';
-
-      obj.addParserForExtension('jpeg', parser3, true);
-      expect(obj.parsers, 'parsers length').to.have.lengthOf(2);
-      expect(obj.parsers[0].id).to.equal('Parser 2');
-      expect(obj.parsers[1].id).to.equal('Parser 3');
-      expect(obj.parsers[1].getExtensions()).eql(['png', 'pdf', 'jpeg']);
-    })
-  });
+  
 });
