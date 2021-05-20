@@ -513,8 +513,9 @@ export default class SCNT {
       if(this._extensionAliases[repl] && !used.has(repl)) {
         used.add(repl);
         repl = this._extensionAliases[repl];
+      } else {
+        break;
       }
-      break;
     };
     
     return repl;
