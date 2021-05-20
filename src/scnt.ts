@@ -496,14 +496,28 @@ export default class SCNT {
   }
 
   /**
-   * Takes an incoming extension and applies aliasing and cleaning if necessary
+   * Takes an incoming extension and applies aliasing and cleaning if necessary.
+   * 
+   * Will keep replacing extensions as long as there are matches. The
+   * infinite-loop scenerio is prevented by only aliasing each extension once.
    * 
    * @param ext string file extension
    * @returns final file extension
    */
   public aliasExtension(ext:string):string {
-    const repl = this.getExtensionAlias(ext);
-    return repl || cleanExtension(ext);
+    const used = new Set<string>();
+    let repl = cleanExtension(ext);
+    
+    // eslint-disable-next-line
+    while(true) {
+      if(this._extensionAliases[repl] && !used.has(repl)) {
+        used.add(repl);
+        repl = this._extensionAliases[repl];
+      }
+      break;
+    };
+    
+    return repl;
   }
 
   /**
