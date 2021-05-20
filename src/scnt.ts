@@ -48,6 +48,9 @@ export type SCNTFileMap = Map<string, Statistics>;
 
 export type SCNTStatistics = [SCNTFileMap, LineStats, CharacterStats];
 
+export type KeyValueArray<K, V> = [ [K, V] ];
+export type StringKeyValueArray = KeyValueArray<string, string>;
+
 /**
  * Source Code Counter
  * 
@@ -72,7 +75,9 @@ export default class SCNT {
     makeEmptyCharacterStatistics(),
   ];
 
-  options: SCNTOptions;
+  public options: SCNTOptions;
+
+  private _extensionAliases: {[key:string]:string};
 
   private _parsers: Array<Parser>;
 
@@ -85,8 +90,8 @@ export default class SCNT {
   constructor(options?:SCNTOpts) {
     this.options = { ...SCNT.DefaultOptions };
 
+    this._extensionAliases = {};
     this._parsers = [];
-
     this._filesRead = new Map();
 
     this.reset = this.reset.bind(this);
@@ -106,6 +111,13 @@ export default class SCNT {
 
     this.hasParserForExtension = this.hasParserForExtension.bind(this);
     this.getParserForExtension = this.getParserForExtension.bind(this);
+
+    this.getExtensionAlias = this.getExtensionAlias.bind(this);
+    this.getExtensionAliases = this.getExtensionAliases.bind(this);
+    this.addExtensionAlias = this.addExtensionAlias.bind(this);
+    this.addExtensionAliases = this.addExtensionAliases.bind(this);
+    this.removeExtensionAlias = this.removeExtensionAlias.bind(this);
+    this.clearExtensionAliases = this.clearExtensionAliases.bind(this);
 
     if(options)
       this.applyOptions(options);
@@ -432,7 +444,7 @@ export default class SCNT {
    * @param ext file extension
    * @returns boolean true if the extension matches a registered parser
    */
-  public hasParserForExtension(ext:string):boolean {
+  public hasParserForExtension(ext: string): boolean {
     const clean = cleanExtension(ext);
     if(!clean || clean === '')
       return false;
@@ -449,11 +461,126 @@ export default class SCNT {
    * @param ext file extension
    * @returns The matching Parser object, or undefined
    */
-  public getParserForExtension(ext:string):(Parser|null) {
+  public getParserForExtension(ext: string): (Parser|null) {
     const clean = cleanExtension(ext);
     if(!clean || clean === '')
       return null;
 
     return this._parsers.find(ent => ent.hasExtension(clean)) || null;
+  }
+
+  /**
+   * Checks if an extension alias exists and returns it if so.
+   * 
+   * @param ext string file extension
+   * @returns new file extension if found, otherwise undefined
+   */
+  public getExtensionAlias(ext: string): (string|undefined) {
+    return this._extensionAliases[cleanExtension(ext)];
+  }
+
+  /**
+   * Returns the current extension alias records as an array of 2-index
+   * key-value arrays.
+   * 
+   * This is in the form of `[ [key, value]... ]`
+   * 
+   * @returns array of 2-index arrays
+   */
+  public getExtensionAliases(): StringKeyValueArray {
+    return Object.entries(this._extensionAliases) as StringKeyValueArray;
+  }
+
+  /**
+   * Creates a new extension alias that replaces all occurances of the `oldExt`
+   * with the `newExt` value during processing.
+   * 
+   * If this entry replaces an existing mapping for `oldExt` then the previous
+   * value is returned. Otherwise it's `undefined` if this is a new record.
+   * 
+   * @param oldExt string of the old extension
+   * @param newExt string of the new extension
+   * @returns string if this new record replaces an existing
+   */
+  public addExtensionAlias(oldExt: string, newExt: string): (string|undefined) {
+    const oldCln = cleanExtension(oldExt);
+    const newCln = cleanExtension(newExt);
+
+    if(!oldCln)
+      throw new TypeError(`SCNT.addExtensionAlias() received invalid extension "${oldExt}" for the oldExt parameter.`);
+
+    if(!newCln)
+      throw new TypeError(`SCNT.addExtensionAlias() received invalid extension "${newExt}" for the newExt parameter.`);
+
+    const existing = this._extensionAliases[oldCln];
+
+    this._extensionAliases[oldCln] = newCln;
+
+    return existing;
+  }
+
+  /**
+   * Recursively adds the alias pairs provided, returning an array of extensions
+   * that where overwritten by this process.
+   * 
+   * The aliases parameter follows the form of `[ [key, value]... ]`
+   * 
+   * @param aliases Array of 2-index arrays for key-value pairs
+   * @returns array of extensions that where overwritten
+   */
+  public addExtensionAliases(aliases: StringKeyValueArray): string[] {
+    return aliases.map((ent:string[], ind:number):(string|null) => {
+      if(typeof ent !== 'object' || !Array.isArray(ent))
+        throw new Error(`SCNT.addExtensionAliases() parameter index ${ind} is not an Array!`);
+
+      if(ent.length < 2)
+        throw new Error(`SCNT.addExtensionAliases() parameter index ${ind} does not have a length of 2!`);
+
+      if(typeof ent[0] !== 'string')
+        throw new Error(`SCNT.addExtensionAliases() parameter index ${ind} does not have a string for the first index!`);
+
+      if(typeof ent[1] !== 'string')
+        throw new Error(`SCNT.addExtensionAliases() parameter index ${ind} does not have a string for the second index!`);
+
+      const oldExt = cleanExtension(ent[0]);
+      if(!oldExt)
+        throw new Error(`SCNT.addExtensionAliases() parameter index ${ind} does not have a valid string extension for the first index!`);
+
+      const newExt = cleanExtension(ent[1]);
+      if(!newExt)
+        throw new Error(`SCNT.addExtensionAliases() parameter index ${ind} does not have a valid string extension for the second index!`);
+
+      const existing = this._extensionAliases[oldExt];
+
+      this._extensionAliases[oldExt] = newExt;
+
+      return (existing || null);
+    }).filter(ent => (typeof ent === 'string' && ent.length > 0)) as string[];
+  }
+
+  /**
+   * Removes an extension alias record
+   * 
+   * @param ext string of the file extension alias
+   * @returns true if something was removed
+   */
+  public removeExtensionAlias(ext: string): boolean {
+    const cln = cleanExtension(ext);
+    if(!cln)
+      throw new TypeError(`SCNT.removeExtensionAlias() received invalid extension "${ext}" as it's parameter.`);
+
+    if(this._extensionAliases[cln]) {
+      delete this._extensionAliases[cln];
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Removes all extension aliases
+   */
+  public clearExtensionAliases(): void {
+    this._extensionAliases = {};
   }
 }
