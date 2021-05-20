@@ -10,7 +10,8 @@ import Chalk from 'chalk';
 import glob from 'glob';
 
 import { cleanExtension } from './extensions';
-import SCNT from './scnt';
+import SCNT, { StringKeyValueArray } from './scnt';
+import Parser, { ParserClassType } from './parser';
 
 const clrDebug = Chalk.gray;
 const clrInfo = Chalk.blue;
@@ -22,7 +23,20 @@ console.debug = () => {
   // NOOP
 };
 
+// Generic type for string based key-value pair objects
 export type KeyValue = {[key:string]:string};
+
+// Holds the total list of available parsers
+export const parserMap:{[key:string]:Parser} = {};
+
+// Helper function to add a parser by class, will instantiate as default params.
+export function addParser(ParserClass: ParserClassType): void {
+  const obj = new ParserClass();
+  parserMap[obj.id] = obj;
+}
+
+// Adding all the parser classes
+addParser(Parser);
 
 /**
  * Attempts to parse incoming regular expression arguments and construct them
@@ -96,17 +110,25 @@ export function setupProgram():[OptionValues, string[]] {
   const program = new Command()
     .version(packageJSON.version, '-v, --version')
     .usage('[options] [<file>|<directory>|<glob>...]')
-    .option('-d, --debug', 'extra output info when processing', false)
+    .option('-D, --debug', 'extra output info when processing', false)
     .option('-e, --exclude <regex>', 'excludes the files that match the regular expression, stackable with multiple usages', optCollectRegexs, [])
     .option('-a, --alias <extension>=<extension>', 'alias one extension for another, stackable with multiple usages', optAliases, {})
     .option('-p, --parsers <parsers...>', 'list of Parser IDs to use, defaults to all')
-    .option('-u, --allow-unknowns', 'allows processing unknown file types with default parser')
-    .option('-D, --default <parser>', 'sets the default parser to use for unknowns by Parser ID')
+    .option('-d, --default <parser>', 'sets the default parser to use for unknowns by Parser ID (default is none, they are skipped)')
+    .option('-l, --list-parsers', 'lists the available parser id keys, only this will be performed if provided')
     .option('--dry', 'does not read any files, just outputs all the debug information up to that point')
-    .option('--list-ids', 'lists the available parser id keys, only this will be performed if provided')
     .parse(process.argv);
 
   return [ program.opts(), program.args ];
+}
+
+function printParsers(): void {
+  console.log('Available Parsers:');
+  for(const [ id, obj ] of Object.entries(parserMap)) {
+    console.log(`- ${id}\t"${obj.name}"`);
+    for(const ext of obj.getExtensions())
+      console.log(`\t.${ext}`);
+  }
 }
 
 /**
@@ -154,9 +176,82 @@ export default function CLI(): void {
   console.debug(`Running in verbose debug mode`);
 
   // Dump the parser IDs if we need to
-  if(options.listIds) {
-    console.log('No IDs yet');
-    process.exit(0);
+  if(options.listParsers) {
+    printParsers();
+
+    // EXIT program
+    return;
+  }
+
+  // Setup the main SCNT object so we can prep it for processing
+  const scnt = new SCNT();
+
+  // Validate the list of parsers and clean them up. This will exit on error
+  if(options.parsers) {
+    let hadErr = false;
+    options.parsers.forEach((ent: string, ind: number) => {
+      const cln = ent.toLocaleLowerCase().trim();
+      if(parserMap[cln]) {
+        console.debug(`Argument --parsers index ${ind} "${ent}" is valid.`);
+        scnt.addParser(parserMap[cln]);
+      } else {
+        console.log(clrErr(`Argument --parsers index ${ind} "${ent}" is not a valid Parser ID.`));
+        hadErr = true;
+      }
+    });
+
+    if(hadErr) {
+      console.log('\n');
+      printParsers();
+
+      process.exit(1);
+      return;
+    }
+  }
+
+  // Check the --default option
+  if(options.default) {
+    const cln = options.default.toLocaleLowerCase().trim();
+    if(parserMap[cln]) {
+      console.debug(`Argument --default "${cln}" is valid, using as default parser.`);
+      scnt.options.defaultParser = parserMap[cln];
+    } else {
+      console.log(clrErr(`Argument --default "${options.default}" is not a valid Parser ID`));
+      console.log('\n');
+      printParsers();
+
+      process.exit(1);
+      return;
+    }
+  }
+
+  // Check the --alias option
+  if(options.alias) {
+    const aliases = Object.entries(options.alias)
+      .map((ent:[string, unknown]):string[] => {
+        if(typeof ent[1] === 'string') {
+          console.debug(`Adding extension alias for "${ent[0]}" => "${ent[1]}"`);
+          return [ ent[0] as string, ent[1] as string ];
+        }
+        throw new Error(`Invalid array entry types, extension aliases should have been in the form of [ ["key", "value"]... ]!`);
+      }) as StringKeyValueArray;
+      
+    try {
+      scnt.addExtensionAliases(aliases)
+        .forEach(ent => console.debug(`Overwrote extension alias "${ent}"`));
+    } catch (err) {
+      console.error(err.message || err);
+      console.log(clrErr(`Invalid --alias arguments! Please check the options provided and try again.`));
+      process.exit(1);
+    }
+  }
+
+  const extAliases = scnt.getExtensionAliases();
+  if(extAliases && extAliases.length > 0) {
+    console.log(clrInfo(`Extension Aliases:`));
+    extAliases.forEach((ent:[string, string]) => {
+      console.log(clrInfo(`- ${ent[0]} => ${ent[1]}`));
+    });
   }
 
   // Cast the options for TS fun.
