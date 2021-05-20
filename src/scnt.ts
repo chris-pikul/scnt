@@ -210,6 +210,11 @@ export default class SCNT {
     else if(this.options.requireExtension || this.options.defaultParser == null)
       throw new Error('No file extension was found in the file name, or no defaultParser was set');
 
+    // Check for extension aliases
+    const extAlias = this.getExtensionAlias(ext);
+    if(extAlias)
+      ext = extAlias;
+
     // Try to match the extension to a parser now.
     let parser:(Parser|null) = this.options.defaultParser;
     if(ext !== '')
