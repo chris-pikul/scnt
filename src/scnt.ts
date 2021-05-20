@@ -114,6 +114,7 @@ export default class SCNT {
 
     this.getExtensionAlias = this.getExtensionAlias.bind(this);
     this.getExtensionAliases = this.getExtensionAliases.bind(this);
+    this.aliasExtension = this.aliasExtension.bind(this);
     this.addExtensionAlias = this.addExtensionAlias.bind(this);
     this.addExtensionAliases = this.addExtensionAliases.bind(this);
     this.removeExtensionAlias = this.removeExtensionAlias.bind(this);
@@ -211,9 +212,7 @@ export default class SCNT {
       throw new Error('No file extension was found in the file name, or no defaultParser was set');
 
     // Check for extension aliases
-    const extAlias = this.getExtensionAlias(ext);
-    if(extAlias)
-      ext = extAlias;
+    ext = this.aliasExtension(ext);
 
     // Try to match the extension to a parser now.
     let parser:(Parser|null) = this.options.defaultParser;
@@ -494,6 +493,17 @@ export default class SCNT {
    */
   public getExtensionAliases(): StringKeyValueArray {
     return Object.entries(this._extensionAliases) as StringKeyValueArray;
+  }
+
+  /**
+   * Takes an incoming extension and applies aliasing and cleaning if necessary
+   * 
+   * @param ext string file extension
+   * @returns final file extension
+   */
+  public aliasExtension(ext:string):string {
+    const repl = this.getExtensionAlias(ext);
+    return repl || cleanExtension(ext);
   }
 
   /**
