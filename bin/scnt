@@ -12,4 +12,4 @@ const CWD = __dirname || (FS.realpathSync(__filename));
 const Lib = Path.resolve(CWD, '../', 'dist');
 
 // Require in the actual CLI now
-require( Path.join(Lib, 'cli') );
+require( Path.join(Lib, 'cli') ).default();

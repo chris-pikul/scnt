@@ -12,7 +12,7 @@ import { cleanExtension } from '../extensions';
  * The base interface for a Parser
  */
 export interface IParser {
-  
+
   /**
    * Readonly ID for this parser. This is primarily used as a unique key for
    * this parser and isn't directly reported by formatters.
@@ -277,3 +277,6 @@ export default class Parser implements IParser {
     return (this.extensions.splice(ind, 1).length > 0);
   }
 }
+
+export type ParserClassType =
+  new (id?:(string|null), name?:(string|null), extensions?:(string|string[]|null)) => Parser;
