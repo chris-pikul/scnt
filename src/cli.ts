@@ -9,7 +9,7 @@ import {
 import Chalk from 'chalk';
 import glob from 'glob';
 
-import { cleanExtension } from './extensions';
+import { cleanExtension, extractExtension } from './extensions';
 import SCNT, { StringKeyValueArray } from './scnt';
 import Parser, { ParserClassType } from './parser';
 
@@ -259,7 +259,7 @@ export default function CLI(): void {
 
   // Anonymous async function to fake node into being polite about async/await.
   (async() => {
-    const files = new Set();
+    const files = new Set<string>();
     for(const arg of args) {
       console.log(clrInfo(`Searching paths for ${arg}...`));
       for await (const file of walkGlob(arg)) {
@@ -281,9 +281,27 @@ export default function CLI(): void {
         files.add(file);
       }
     }
-  
-    for(const file of files)
-      console.debug(`Parsing file ${file}`);
+
+    for(const file of files) {
+      console.log(clrInfo(`Processing file ${file}`));
+    
+      // Do some manual work for debug logging
+      if(options.debug) {
+        const ext = extractExtension(file);
+        console.debug(`Extracted extension for "${file}" => "${ext}"`);
+
+        const symExt = scnt.aliasExtension(ext);
+        console.debug(`Post-alias extension for "${file}" = "${symExt}"`);
+
+        const parser = scnt.getParserForExtension(symExt);
+        if(parser)
+          console.debug(`Using parser "${parser.name}" (${parser.id}) for "${file}"`);
+        else if(scnt.options.defaultParser)
+          console.debug(`Using default parser "${scnt.options.defaultParser.name}" (${scnt.options.defaultParser.id}) for "${file}"`);
+        else
+          console.debug(`No parser found to match file "${file}" with extension "${symExt}"!`);
+      }
+    }
   })().catch(err => {
     // Must always catch errors!
     console.log(clrErr('Failed to process folder/files!'));
