@@ -65,7 +65,7 @@ export type StringKeyValueArray = KeyValueArray<string, string>;
  */
 export default class SCNT {
   static readonly DefaultOptions: SCNTOptions = {
-    requireExtension: true,
+    requireExtension: false,
     defaultParser: null,
   };
 
@@ -208,16 +208,14 @@ export default class SCNT {
     let ext = '';
     if(hasExtension(fileName))
       ext = extractExtension(fileName);
-    else if(this.options.requireExtension || this.options.defaultParser == null)
+    else if(this.options.requireExtension || !this.options.defaultParser)
       throw new Error('No file extension was found in the file name, or no defaultParser was set');
 
     // Check for extension aliases
     ext = this.aliasExtension(ext);
 
     // Try to match the extension to a parser now.
-    let parser:(Parser|null) = this.options.defaultParser;
-    if(ext !== '')
-      parser = this.getParserForExtension(ext);
+    const parser:(Parser|null) = this.getParserForExtension(ext) || this.options.defaultParser;
 
     // If we didn't find a parser that will work, then shortcut out.
     if(!parser)

@@ -102,8 +102,8 @@ module.exports = {
       'declaration',
       { allowArrowFunctions: true },
     ],
-    'function-call-argument-newline': [ 'warn', 'never' ],
-    'function-paren-newline': [ 'warn', 'never' ],
+    'function-call-argument-newline': [ 'warn', 'consistent' ],
+    'function-paren-newline': [ 'warn', 'multiline' ],
     'id-length': [ 'warn', { min: 2 } ],
     'implicit-arrow-linebreak': [ 'warn', 'beside' ],
     'indent': [

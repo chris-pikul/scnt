@@ -8,6 +8,7 @@ import {
 } from 'commander';
 import Chalk from 'chalk';
 import glob from 'glob';
+import Table from 'cli-table';
 
 import { cleanExtension, extractExtension } from './extensions';
 import SCNT, { StringKeyValueArray } from './scnt';
@@ -111,13 +112,18 @@ export function setupProgram():[OptionValues, string[]] {
     .version(packageJSON.version, '-v, --version')
     .usage('[options] [<file>|<directory>|<glob>...]')
     .option('-D, --debug', 'extra output info when processing', false)
+    .option('-i, --ignore-errors', 'logs IO errors but continues processing', false)
     .option('-e, --exclude <regex>', 'excludes the files that match the regular expression, stackable with multiple usages', optCollectRegexs, [])
     .option('-a, --alias <extension>=<extension>', 'alias one extension for another, stackable with multiple usages', optAliases, {})
     .option('-p, --parsers <parsers...>', 'list of Parser IDs to use, defaults to all')
     .option('-d, --default <parser>', 'sets the default parser to use for unknowns by Parser ID (default is none, they are skipped)')
     .option('-l, --list-parsers', 'lists the available parser id keys, only this will be performed if provided')
-    .option('--dry', 'does not read any files, just outputs all the debug information up to that point')
+    .option('--dry-run', 'does not read any files, just outputs all the debug information up to that point')
     .parse(process.argv);
+
+  // Default argument is current directory
+  if(program.args.length === 0)
+    program.args.push('./*');
 
   return [ program.opts(), program.args ];
 }
@@ -301,7 +307,58 @@ export default function CLI(): void {
         else
           console.debug(`No parser found to match file "${file}" with extension "${symExt}"!`);
       }
+
+      if(!options.dryRun) {
+        try {
+          const rawContents = await FS.promises.readFile(file);
+          await scnt.process(file, rawContents.toString());
+        } catch (err) {
+          console.log(clrErr(`Error reading file "${file}": ${err.message || err}`));
+
+          if(!options.ignoreErrors)
+            throw err;
+        }
+      }
     }
+
+    if(options.dryRun) {
+      console.log(clrInfo(`Completed processing, exited due to dry-run option`));
+      return;
+    }
+
+    const [
+      totalFiles,
+      lines,
+      chars,
+    ] = scnt.statistics;
+    
+    console.log(`Completed processing ${totalFiles.size} files\n`);
+
+    const lineTable = new Table();
+    lineTable.push(
+      [ 'Total of All Lines', lines.total ],
+      [ 'Total Source Lines', lines.totalSource ],
+      [ 'Source Only Lines', lines.source ],
+      [ 'Total Comment Lines', lines.totalComments ],
+      [ 'Inline Comment Lines', lines.inlineComments ],
+      [ 'Block Comment Lines', lines.blockComments ],
+      [ 'Mixes Source/Comment Lines', lines.mixed ],
+      [ 'Whitespace Only Lines', lines.whitespace ],
+      [ 'Empty Lines', lines.empty ],
+    );
+    console.log(`${lineTable.toString()}\n`);
+
+    const charTable = new Table();
+    charTable.push(
+      [ 'Total Characters', chars.total ],
+      [ 'Source Characters', chars.source ],
+      [ 'Comment Characters', chars.comment ],
+      [ 'Whitespace Characters', chars.whitespace ],
+      [ 'Numerical Characters', chars.numerical ],
+      [ 'Alphabetical Characters', chars.alphabetical ],
+      [ 'Special Characters', chars.special ],
+    );
+    console.log(`${charTable.toString()}`);
   })().catch(err => {
     // Must always catch errors!
     console.log(clrErr('Failed to process folder/files!'));
