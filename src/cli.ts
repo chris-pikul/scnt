@@ -13,6 +13,8 @@ import Table from 'cli-table';
 import { cleanExtension, extractExtension } from './extensions';
 import SCNT, { StringKeyValueArray } from './scnt';
 import Parser, { ParserClassType } from './parser';
+import CFamilyParser from './parser/cfamily';
+import { performance } from 'perf_hooks';
 
 const clrDebug = Chalk.gray;
 const clrInfo = Chalk.blue;
@@ -38,6 +40,12 @@ export function addParser(ParserClass: ParserClassType): void {
 
 // Adding all the parser classes
 addParser(Parser);
+addParser(CFamilyParser);
+
+// Performance metrics
+let timeStart = 0;
+let timeProcStart = 0;
+let timeEnd = 0;
 
 /**
  * Attempts to parse incoming regular expression arguments and construct them
@@ -102,6 +110,9 @@ export function optAliases(value: string, previous: KeyValue = {}): KeyValue {
  * @returns commander.OptionValues of the parsed arguments
  */
 export function setupProgram():[OptionValues, string[]] {
+  // Start performance
+  timeStart = performance.now();
+
   // Reading the package.json file to snag variables from there.
   const packagePath = Path.resolve(__dirname, '..', 'package.json');
   const packageData = FS.readFileSync(packagePath, { encoding: 'utf8' });
@@ -213,7 +224,13 @@ export default function CLI(): void {
       process.exit(1);
       return;
     }
+  } else {
+    // Add all the parser's we have (or at least a reasonable default)
+    scnt.addParser([ new Parser(), new CFamilyParser() ]);
   }
+
+  console.debug(`Parsers initialized into SCNT:`);
+  scnt.getAllParsers().forEach((parser:Parser) => console.debug(` - ${parser.id}: ${parser.name}`));
 
   // Check the --default option
   if(options.default) {
@@ -264,6 +281,9 @@ export default function CLI(): void {
 
   // Cast the options for TS fun.
   const optionExclude: RegExp[] = options.exclude as RegExp[];
+
+  // Grab the perf time for processing to actually start
+  timeProcStart = performance.now();
 
   // Anonymous async function to fake node into being polite about async/await.
   (async() => {
@@ -335,9 +355,18 @@ export default function CLI(): void {
       lines,
       chars,
     ] = scnt.statistics;
+
+    // Mark the end of all performance metrics
+    timeEnd = performance.now();
+
+    console.debug(`\nPerformance metrics:`);
+    console.debug(`Startup time: ${(timeProcStart - timeStart).toPrecision(2)}ms`);
+    console.debug(`Processing time: ${(timeEnd - timeProcStart).toPrecision(2)}ms`);
+    console.debug(`Total time: ${(timeEnd - timeStart).toPrecision(2)}ms`);
+    console.debug(`Average time per file: ${((timeEnd - timeProcStart) / totalFiles.size).toPrecision(2)}ms/file`);
     
     console.log(`Completed processing ${totalFiles.size} files\n`);
-
+    
     const lineTable = new Table();
     lineTable.push(
       [ 'Total of All Lines', lines.total ],

@@ -105,6 +105,8 @@ export default class Parser implements IParser {
    * @param extensions Optional single, or array, of file extensions
    */
   constructor(id?:(string|null), name?:(string|null), extensions?:(string|string[]|null)) {
+    this.extensions = [ 'txt', 'md' ];
+
     this.parse = this.parse.bind(this);
 
     this.getExtensions = this.getExtensions.bind(this);

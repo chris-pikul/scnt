@@ -1,3 +1,4 @@
+import { resolve } from 'path';
 import {
   hasExtension,
   extractExtension,
@@ -11,6 +12,7 @@ import {
   Statistics,
   makeEmptyLineStatistics,
   makeEmptyCharacterStatistics,
+  makeEmptyStatistics,
 } from './stats';
 
 export interface SCNTOptions {
@@ -208,18 +210,20 @@ export default class SCNT {
     let ext = '';
     if(hasExtension(fileName))
       ext = extractExtension(fileName);
-    else if(this.options.requireExtension || !this.options.defaultParser)
+    else if(this.options.requireExtension)
       throw new Error('No file extension was found in the file name, or no defaultParser was set');
+    else if(!this.options.defaultParser)
+      return makeEmptyStatistics();
 
     // Check for extension aliases
     ext = this.aliasExtension(ext);
 
     // Try to match the extension to a parser now.
-    const parser:(Parser|null) = this.getParserForExtension(ext) || this.options.defaultParser;
+    const parser:(Parser|null) = this.getParserForExtension(ext) ?? this.options.defaultParser;
 
     // If we didn't find a parser that will work, then shortcut out.
     if(!parser)
-      throw new Error(`No matching Parser was found registered to the extension "${ext}" and no default available`);
+      return makeEmptyStatistics();
 
     // Run the parser (async)
     const stats: Statistics = await parser.parse(contents);
