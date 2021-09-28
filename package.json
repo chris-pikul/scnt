@@ -1,6 +1,6 @@
 {
   "name": "scnt",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Utility program/library for counting source code lines",
   "main": "index.js",
   "scripts": {
