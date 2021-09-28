@@ -245,8 +245,10 @@ export default function CLI(): void {
     try {
       scnt.addExtensionAliases(aliases)
         .forEach(ent => console.debug(`Overwrote extension alias "${ent}"`));
-    } catch (err) {
-      console.error(err.message || err);
+    } catch (err:unknown) {
+      if(err instanceof Error)
+        console.error(err.message || err);
+      
       console.log(clrErr(`Invalid --alias arguments! Please check the options provided and try again.`));
       process.exit(1);
     }
@@ -312,11 +314,13 @@ export default function CLI(): void {
         try {
           const rawContents = await FS.promises.readFile(file);
           await scnt.process(file, rawContents.toString());
-        } catch (err) {
-          console.log(clrErr(`Error reading file "${file}": ${err.message || err}`));
+        } catch (err:unknown) {
+          if(err instanceof Error) {
+            console.log(clrErr(`Error reading file "${file}": ${err.message ?? err}`));
 
-          if(!options.ignoreErrors)
-            throw err;
+            if(!options.ignoreErrors)
+              throw err;
+          }
         }
       }
     }
