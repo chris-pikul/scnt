@@ -58,12 +58,8 @@ let timeEnd = 0;
  */
 export function optCollectRegexs(value: string, previous: RegExp[] = []): RegExp[] {
   try {
-    if(value[0] !== '/') {
-      console.log(clrWarn(`Wrapping regular expression "${value}" in slashes to conform properly!`));
-      return [ ...previous, new RegExp(`/${value}/`) ];
-    }
-
-    return [ ...previous, new RegExp(value) ];
+    const regex = new RegExp(value);
+    return [ ...previous, regex ];
   } catch (err) {
     throw new InvalidOptionArgumentError(`"${value}" is not a valid regular expression.`);
   }

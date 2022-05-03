@@ -9,15 +9,13 @@ import { expect } from 'chai';
 describe('Command Line Interface', () => {
   describe('#optCollectRegexs()', () => {
     it('accepts a regular regex', () => {
-      expect(optCollectRegexs('/test/')).to.eql([/test/]);
+      const res = optCollectRegexs('/test/');
+      expect(res).to.be.an('Array').with.lengthOf(1);
+      expect(res[0]).to.be.a('RegExp');
     });
-
-    it('wraps in slashes for validity', () => {
-      expect(optCollectRegexs('test')).to.eql([/test/]);
-    });
-
+    
     it('throws on invalid regex', () => {
-      expect(() => optCollectRegexs('\\')).to.throw();
+      expect(() => optCollectRegexs('(')).to.throw();
     });
   });
 });
