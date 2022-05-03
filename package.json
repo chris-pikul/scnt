@@ -1,8 +1,12 @@
 {
   "name": "scnt",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Utility program/library for counting source code lines",
   "main": "index.js",
+  "files": [
+    "bin",
+    "dist"
+  ],
   "scripts": {
     "clean": "node clean",
     "lint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
